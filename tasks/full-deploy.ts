@@ -73,13 +73,10 @@ task('full-deploy', 'deploys the entire Lens Protocol').setAction(async ({}, hre
   // Here, we pre-compute the nonces and addresses used to deploy the contracts.
   // const nonce = await deployer.getTransactionCount();
   const followNFTNonce = hexlify(deployerNonce + 1);
-  const collectNFTNonce = hexlify(deployerNonce + 2);
-  const hubProxyNonce = hexlify(deployerNonce + 3);
+  const hubProxyNonce = hexlify(deployerNonce + 2);
 
   const followNFTImplAddress =
     '0x' + keccak256(RLP.encode([deployer.address, followNFTNonce])).substr(26);
-  const collectNFTImplAddress =
-    '0x' + keccak256(RLP.encode([deployer.address, collectNFTNonce])).substr(26);
   const hubProxyAddress =
     '0x' + keccak256(RLP.encode([deployer.address, hubProxyNonce])).substr(26);
 
@@ -88,17 +85,14 @@ task('full-deploy', 'deploys the entire Lens Protocol').setAction(async ({}, hre
   console.log('\n\t-- Deploying Hub Implementation --');
 
   const lensHubImpl = await deployContract(
-    new LensHub__factory(hubLibs, deployer).deploy(followNFTImplAddress, collectNFTImplAddress, {
+    new LensHub__factory(hubLibs, deployer).deploy(followNFTImplAddress, {
       nonce: deployerNonce++,
     })
   );
 
-  console.log('\n\t-- Deploying Follow & Collect NFT Implementations --');
+  console.log('\n\t-- Deploying Follow NFT Implementations --');
   await deployContract(
     new FollowNFT__factory(deployer).deploy(hubProxyAddress, { nonce: deployerNonce++ })
-  );
-  await deployContract(
-    new CollectNFT__factory(deployer).deploy(hubProxyAddress, { nonce: deployerNonce++ })
   );
 
   let data = lensHubImpl.interface.encodeFunctionData('initialize', [

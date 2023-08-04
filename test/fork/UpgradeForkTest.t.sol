@@ -7,10 +7,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import 'forge-std/console2.sol';
 import 'test/base/BaseTest.t.sol';
 import 'test/mocks/MockReferenceModule.sol';
-import 'test/mocks/MockDeprecatedReferenceModule.sol';
-import 'test/mocks/MockDeprecatedCollectModule.sol';
 import 'test/mocks/MockFollowModule.sol';
-import 'test/mocks/MockDeprecatedFollowModule.sol';
 import {Typehash} from 'contracts/libraries/constants/Typehash.sol';
 
 struct OldCreateProfileParams {
@@ -225,64 +222,6 @@ contract UpgradeForkTest is BaseTest {
             // assertEq(pub.collectNFT, address(0));
         } catch {
             console2.log('Post with modern collect and reference module failed, Attempting with deprecated modules');
-
-            // address mockDeprecatedCollectModule = address(new MockDeprecatedCollectModule()); // TODO: Proper test
-            address mockDeprecatedReferenceModule = address(new MockDeprecatedReferenceModule());
-
-            vm.startPrank(gov);
-            // hub.whitelistCollectModule(mockDeprecatedCollectModule, true); // TODO: Proper test
-            hub.whitelistReferenceModule(mockDeprecatedReferenceModule, true);
-            vm.stopPrank();
-
-            // Post.
-            // postParams.collectModule = mockDeprecatedCollectModule; // TODO: Proper test
-            postParams.referenceModule = mockDeprecatedReferenceModule;
-            uint256 postId = hub.post(postParams);
-
-            // Validate post.
-            assertEq(postId, 1);
-            Types.Publication memory pub = hub.getPublication(profileId, postId);
-            assertEq(pub.pointedProfileId, 0);
-            assertEq(pub.pointedPubId, 0);
-            assertEq(pub.contentURI, postParams.contentURI);
-            assertEq(pub.referenceModule, postParams.referenceModule);
-            // assertEq(pub.collectModule, postParams.collectModule); // TODO: Proper test
-            // assertEq(pub.collectNFT, address(0));
-
-            // Comment.
-            // commentParams.collectModule = mockDeprecatedCollectModule; // TODO: Proper test
-            commentParams.referenceModule = mockDeprecatedReferenceModule;
-            uint256 commentId = hub.comment(commentParams);
-
-            // Validate comment.
-            assertEq(commentId, 2);
-            pub = hub.getPublication(profileId, commentId);
-            assertEq(pub.pointedProfileId, commentParams.pointedProfileId);
-            assertEq(pub.pointedPubId, commentParams.pointedPubId);
-            assertEq(pub.contentURI, commentParams.contentURI);
-            assertEq(pub.referenceModule, commentParams.referenceModule);
-            // assertEq(pub.collectModule, commentParams.collectModule); // TODO: Proper test
-            // assertEq(pub.collectNFT, address(0));
-
-            // Mirror.
-            OldMirrorParams memory oldMirrorParams = OldMirrorParams({
-                profileId: mirrorParams.profileId,
-                pointedProfileId: mirrorParams.pointedProfileId,
-                pointedPubId: mirrorParams.pointedPubId,
-                referenceModuleData: mirrorParams.referenceModuleData,
-                referenceModule: mockDeprecatedReferenceModule,
-                referenceModuleInitData: commentParams.referenceModuleInitData
-            });
-
-            uint256 mirrorId = IOldHub(address(hub)).mirror(oldMirrorParams);
-
-            // Validate mirror.
-            assertEq(mirrorId, 3);
-            pub = hub.getPublication(profileId, mirrorId);
-            assertEq(pub.pointedProfileId, mirrorParams.pointedProfileId);
-            assertEq(pub.pointedPubId, mirrorParams.pointedPubId);
-            assertEq(pub.contentURI, '');
-            assertEq(pub.referenceModule, mockDeprecatedReferenceModule);
             // assertEq(pub.collectModule, address(0)); // TODO: Proper test
             // assertEq(pub.collectNFT, address(0));
         }
@@ -346,23 +285,18 @@ contract UpgradeForkTest is BaseTest {
 
         // Precompute needed addresss.
         address followNFTAddr = computeCreateAddress(deployer, 1);
-        address legacyCollectNFTAddr = computeCreateAddress(deployer, 2);
 
         // Deploy implementation contracts.
         // TODO: Last 3 addresses are for the follow modules for migration purposes.
         hubImpl = new LensHubInitializable({
             moduleGlobals: address(0),
             followNFTImpl: followNFTAddr,
-            collectNFTImpl: legacyCollectNFTAddr,
             lensHandlesAddress: address(0),
             tokenHandleRegistryAddress: address(0),
-            legacyFeeFollowModule: address(0),
-            legacyProfileFollowModule: address(0),
             newFeeFollowModule: address(0),
             tokenGuardianCooldown: PROFILE_GUARDIAN_COOLDOWN
         });
         followNFT = new FollowNFT(hubProxyAddr);
-        legacyCollectNFT = new LegacyCollectNFT(hubProxyAddr);
 
         // Deploy the mock modules.
         mockReferenceModuleAddr = address(new MockReferenceModule());

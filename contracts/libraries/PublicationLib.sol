@@ -7,7 +7,6 @@ import {Types} from 'contracts/libraries/constants/Types.sol';
 import {Events} from 'contracts/libraries/constants/Events.sol';
 import {Errors} from 'contracts/libraries/constants/Errors.sol';
 import {IReferenceModule} from 'contracts/interfaces/IReferenceModule.sol';
-import {ILegacyReferenceModule} from 'contracts/interfaces/ILegacyReferenceModule.sol';
 import {StorageLib} from 'contracts/libraries/StorageLib.sol';
 import {IPublicationActionModule} from 'contracts/interfaces/IPublicationActionModule.sol';
 
@@ -343,16 +342,6 @@ library PublicationLib {
                         revert(add(err, 32), length)
                     }
                 }
-                if (commentParams.referrerProfileIds.length > 0) {
-                    // Deprecated reference modules don't support referrers.
-                    revert Errors.InvalidReferrer();
-                }
-                ILegacyReferenceModule(refModule).processComment(
-                    commentParams.profileId,
-                    commentParams.pointedProfileId,
-                    commentParams.pointedPubId,
-                    commentParams.referenceModuleData
-                );
             }
         } else {
             if (commentParams.referrerProfileIds.length > 0) {
@@ -396,16 +385,6 @@ library PublicationLib {
                         revert(add(err, 32), length)
                     }
                 }
-                if (quoteParams.referrerProfileIds.length > 0) {
-                    // Deprecated reference modules don't support referrers.
-                    revert Errors.InvalidReferrer();
-                }
-                ILegacyReferenceModule(refModule).processComment(
-                    quoteParams.profileId,
-                    quoteParams.pointedProfileId,
-                    quoteParams.pointedPubId,
-                    quoteParams.referenceModuleData
-                );
             }
         } else {
             if (quoteParams.referrerProfileIds.length > 0) {
@@ -449,16 +428,6 @@ library PublicationLib {
                         revert(add(err, 32), length)
                     }
                 }
-                if (mirrorParams.referrerProfileIds.length > 0) {
-                    // Deprecated reference modules don't support referrers.
-                    revert Errors.InvalidReferrer();
-                }
-                ILegacyReferenceModule(refModule).processMirror(
-                    mirrorParams.profileId,
-                    mirrorParams.pointedProfileId,
-                    mirrorParams.pointedPubId,
-                    mirrorParams.referenceModuleData
-                );
             }
         } else {
             if (mirrorParams.referrerProfileIds.length > 0) {

@@ -3,8 +3,6 @@ pragma solidity ^0.8.13;
 
 import 'test/mocks/MockModule.sol';
 import 'test/base/BaseTest.t.sol';
-import {MockDeprecatedCollectModule} from 'test/mocks/MockDeprecatedCollectModule.sol';
-import {MockDeprecatedReferenceModule} from 'test/mocks/MockDeprecatedReferenceModule.sol';
 
 /*
 This kind of tree is created:
@@ -31,9 +29,6 @@ This kind of tree is created:
  */
 abstract contract ReferralSystemTest is BaseTest {
     uint256 testAccountId;
-
-    address mockDeprecatedReferenceModule = address(new MockDeprecatedReferenceModule());
-    address mockDeprecatedCollectModule = address(new MockDeprecatedCollectModule());
 
     function _referralSystem_PrepareOperation(
         TestPublication memory target,
@@ -342,45 +337,6 @@ abstract contract ReferralSystemTest is BaseTest {
         return tree;
     }
 
-    function _convertToV1(
-        TestPublication memory pub,
-        uint256 v1FuzzBitmap,
-        uint256 v1FuzzBitmapIndex
-    ) internal {
-        Types.Publication memory publication = hub.getPublication(pub.profileId, pub.pubId);
-        Types.Publication memory pointedPub = hub.getPublication(
-            publication.pointedProfileId,
-            publication.pointedPubId
-        );
-        if (_isV1LegacyPub(pointedPub)) {
-            bool shouldConvertToV1 = ((v1FuzzBitmap >> (v1FuzzBitmapIndex)) & 1) != 0;
-            if (shouldConvertToV1) {
-                console.log(
-                    'Converted (%s, %s) to V1 %s referenceModule',
-                    pub.profileId,
-                    pub.pubId,
-                    uint256(keccak256(abi.encodePacked(v1FuzzBitmap))) % 2 == 0 ? 'without' : 'with'
-                );
-                _toLegacyV1Pub(
-                    pub.profileId,
-                    pub.pubId,
-                    uint256(keccak256(abi.encodePacked(v1FuzzBitmap))) % 2 == 0
-                        ? address(0)
-                        : mockDeprecatedReferenceModule,
-                    publication.pubType == Types.PublicationType.Mirror ? address(0) : mockDeprecatedCollectModule
-                );
-            }
-        }
-    }
-
-    function _convertPostToV1(TestPublication memory pub) internal {
-        console.log('Converted (%s, %s) to V1', pub.profileId, pub.pubId);
-        if (pub.pubId % 2 == 0) {
-            _toLegacyV1Pub(pub.profileId, pub.pubId, mockDeprecatedReferenceModule, mockDeprecatedCollectModule);
-        } else {
-            _toLegacyV1Pub(pub.profileId, pub.pubId, address(0), mockDeprecatedCollectModule);
-        }
-    }
 
     function _createV1Tree(uint256 v1FuzzBitmap) internal returns (Tree memory) {
         Tree memory tree;

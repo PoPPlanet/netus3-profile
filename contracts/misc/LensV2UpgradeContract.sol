@@ -10,11 +10,8 @@ contract LensV2UpgradeContract is ImmutableOwnable {
     ProxyAdmin public immutable PROXY_ADMIN;
     Governance public immutable GOVERNANCE;
     address public immutable newImplementation;
-    address[] public oldFollowModulesToUnwhitelist;
     address[] public newFollowModulesToWhitelist;
-    address[] public oldReferenceModulesToUnwhitelist;
     address[] public newReferenceModulesToWhitelist;
-    address[] public oldCollectModulesToUnwhitelist;
     address[] public newActionModulesToWhitelist;
 
     constructor(
@@ -23,21 +20,15 @@ contract LensV2UpgradeContract is ImmutableOwnable {
         address owner,
         address lensHub,
         address newImplementationAddress,
-        address[] memory oldFollowModulesToUnwhitelist_,
         address[] memory newFollowModulesToWhitelist_,
-        address[] memory oldReferenceModulesToUnwhitelist_,
         address[] memory newReferenceModulesToWhitelist_,
-        address[] memory oldCollectModulesToUnwhitelist_,
         address[] memory newActionModulesToWhitelist_
     ) ImmutableOwnable(owner, lensHub) {
         PROXY_ADMIN = ProxyAdmin(proxyAdminAddress);
         GOVERNANCE = Governance(governanceAddress);
         newImplementation = newImplementationAddress;
-        oldFollowModulesToUnwhitelist = oldFollowModulesToUnwhitelist_;
         newFollowModulesToWhitelist = newFollowModulesToWhitelist_;
-        oldReferenceModulesToUnwhitelist = oldReferenceModulesToUnwhitelist_;
         newReferenceModulesToWhitelist = newReferenceModulesToWhitelist_;
-        oldCollectModulesToUnwhitelist = oldCollectModulesToUnwhitelist_;
         newActionModulesToWhitelist = newActionModulesToWhitelist_;
     }
 
@@ -48,10 +39,6 @@ contract LensV2UpgradeContract is ImmutableOwnable {
     }
 
     function _upgrade() internal {
-        _unwhitelistOldFollowModules();
-        _unwhitelistOldReferenceModules();
-        _unwhitelistOldCollectModules();
-
         PROXY_ADMIN.proxy_upgrade(newImplementation);
 
         _whitelistNewFollowModules();
@@ -59,39 +46,6 @@ contract LensV2UpgradeContract is ImmutableOwnable {
         _whitelistNewActionModules();
 
         GOVERNANCE.clearControllerContract();
-    }
-
-    function _unwhitelistOldFollowModules() internal {
-        uint256 oldFollowModulesToUnwhitelistLength = oldFollowModulesToUnwhitelist.length;
-        uint256 i;
-        while (i < oldFollowModulesToUnwhitelistLength) {
-            GOVERNANCE.lensHub_whitelistFollowModule(oldFollowModulesToUnwhitelist[i], false);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function _unwhitelistOldReferenceModules() internal {
-        uint256 oldReferenceModulesToUnwhitelistLength = oldReferenceModulesToUnwhitelist.length;
-        uint256 i;
-        while (i < oldReferenceModulesToUnwhitelistLength) {
-            GOVERNANCE.lensHub_whitelistReferenceModule(oldReferenceModulesToUnwhitelist[i], false);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function _unwhitelistOldCollectModules() internal {
-        uint256 oldCollectModulesToUnwhitelistLength = oldCollectModulesToUnwhitelist.length;
-        uint256 i;
-        while (i < oldCollectModulesToUnwhitelistLength) {
-            GOVERNANCE.lensHub_whitelistCollectModule(oldCollectModulesToUnwhitelist[i], false);
-            unchecked {
-                ++i;
-            }
-        }
     }
 
     function _whitelistNewFollowModules() internal {

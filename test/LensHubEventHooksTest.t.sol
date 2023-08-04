@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import 'test/base/BaseTest.t.sol';
-import {MockDeprecatedCollectModule} from 'test/mocks/MockDeprecatedCollectModule.sol';
 
 contract LensHubEventHooksTest is BaseTest {
     TestAccount follower;
@@ -24,15 +23,6 @@ contract LensHubEventHooksTest is BaseTest {
         );
 
         assertTrue(hub.isFollowing(follower.profileId, defaultAccount.profileId));
-
-        /// Collect preparation:
-        MockDeprecatedCollectModule mockDeprecatedCollectModule = new MockDeprecatedCollectModule();
-
-        // Create a V1 pub
-        vm.prank(defaultAccount.owner);
-        defaultPubId = hub.post(_getDefaultPostParams());
-
-        _toLegacyV1Pub(defaultAccount.profileId, defaultPubId, address(0), address(mockDeprecatedCollectModule));
 
         Types.CollectParams memory defaultCollectParams = Types.CollectParams({
             publicationCollectedProfileId: defaultAccount.profileId,
