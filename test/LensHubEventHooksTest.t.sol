@@ -23,18 +23,6 @@ contract LensHubEventHooksTest is BaseTest {
         );
 
         assertTrue(hub.isFollowing(follower.profileId, defaultAccount.profileId));
-
-        Types.CollectParams memory defaultCollectParams = Types.CollectParams({
-            publicationCollectedProfileId: defaultAccount.profileId,
-            publicationCollectedId: defaultPubId,
-            collectorProfileId: defaultAccount.profileId,
-            referrerProfileId: 0,
-            referrerPubId: 0,
-            collectModuleData: abi.encode(true)
-        });
-
-        vm.prank(defaultAccount.owner);
-        hub.collect(defaultCollectParams);
     }
 
     function testCannot_EmitUnfollowedEvent_ifNotFollowNFTOfFollowedProfile(address randomAddress) public {

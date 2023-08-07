@@ -78,13 +78,13 @@ contract UpgradeForkTest is BaseTest {
         _forkSetup(hubProxyAddr, gov);
 
         // Create a profile on the old hub, set the default profile.
-        uint256 profileId = _fullCreateProfileSequence(gov, hub);
+        uint256 profileId = _fullCreateProfileSequence(hub);
 
         // Post, comment, mirror.
-        _fullPublishSequence(profileId, gov, hub);
+        _fullPublishSequence(profileId, hub);
 
         // Follow, Collect.
-        _fullFollowCollectSequence(profileId, gov, hub);
+        _fullFollowCollectSequence(profileId, hub);
 
         // Get the profile.
         Types.Profile memory Profile = hub.getProfile(profileId);
@@ -104,13 +104,13 @@ contract UpgradeForkTest is BaseTest {
         assertEq(postUpgradeEncodedProfile, encodedProfile);
 
         // Create a profile on the new hub, set the default profile.
-        profileId = _fullCreateProfileSequence(gov, hub);
+        profileId = _fullCreateProfileSequence(hub);
 
         // Post, comment, mirror.
-        _fullPublishSequence(profileId, gov, hub);
+        _fullPublishSequence(profileId, hub);
 
         // Follow, Collect.
-        _fullFollowCollectSequence(profileId, gov, hub);
+        _fullFollowCollectSequence(profileId, hub);
 
         // Fourth, set new data and ensure getters return the new data (proper slots set).
         vm.prank(gov);
@@ -118,7 +118,7 @@ contract UpgradeForkTest is BaseTest {
         assertEq(hub.getGovernance(), address(this));
     }
 
-    function _fullCreateProfileSequence(address gov, ILensHub hub) private returns (uint256) {
+    function _fullCreateProfileSequence(ILensHub hub) private returns (uint256) {
         // To make this test suite evergreen, we must try setting a modern follow module since we don't know
         // which version of the hub we're working with, if this fails, then we should use a deprecated one.
 
@@ -131,36 +131,11 @@ contract UpgradeForkTest is BaseTest {
             console2.log('Profile created with modern follow module.');
         } catch {
             console2.log('Profile creation with modern follow module failed. Attempting with deprecated module.');
-
-            address mockDeprecatedFollowModule = address(new MockDeprecatedFollowModule());
-
-            vm.prank(gov);
-            hub.whitelistFollowModule(mockDeprecatedFollowModule, true);
-
-            // precompute basic profile creaton data.
-            createProfileParams = Types.CreateProfileParams({
-                to: address(this),
-                imageURI: MOCK_URI,
-                followModule: address(0),
-                followModuleInitData: abi.encode(true)
-            });
-
-            OldCreateProfileParams memory oldCreateProfileParams = OldCreateProfileParams(
-                createProfileParams.to,
-                vm.toString((IERC721Enumerable(address(hub)).totalSupply())),
-                createProfileParams.imageURI,
-                mockDeprecatedFollowModule,
-                createProfileParams.followModuleInitData,
-                MOCK_URI
-            );
-
-            oldCreateProfileParams.followModule = mockDeprecatedFollowModule;
-            profileId = IOldHub(address(hub)).createProfile(oldCreateProfileParams);
         }
         return profileId;
     }
 
-    function _fullPublishSequence(uint256 profileId, address gov, ILensHub hub) private {
+    function _fullPublishSequence(uint256 profileId, ILensHub hub) private {
         // First check if the new interface works, if not, use the old interface.
 
         Types.PostParams memory postParams = _getDefaultPostParams();
@@ -227,7 +202,7 @@ contract UpgradeForkTest is BaseTest {
         }
     }
 
-    function _fullFollowCollectSequence(uint256 profileId, address gov, ILensHub hub) private {
+    function _fullFollowCollectSequence(uint256 profileId, ILensHub hub) private {
         // First check if the new interface works, if not, use the old interface.
         uint256[] memory profileIds = new uint256[](1);
         profileIds[0] = profileId;
@@ -236,46 +211,12 @@ contract UpgradeForkTest is BaseTest {
         bytes[] memory datas = new bytes[](1);
         datas[0] = '';
 
-        uint256 secondProfileId = _fullCreateProfileSequence(gov, hub);
+        uint256 secondProfileId = _fullCreateProfileSequence(hub);
 
         try hub.follow(secondProfileId, profileIds, followTokenIds, datas) {
             console2.log('Follow with modern interface succeeded, continuing with modern interface.');
-            hub.collect(
-                Types.CollectParams({
-                    publicationCollectedProfileId: profileId,
-                    publicationCollectedId: 1,
-                    collectorProfileId: profileId,
-                    referrerProfileId: 0,
-                    referrerPubId: 0,
-                    collectModuleData: ''
-                })
-            );
-            hub.collect(
-                Types.CollectParams({
-                    publicationCollectedProfileId: profileId,
-                    publicationCollectedId: 2,
-                    collectorProfileId: profileId,
-                    referrerProfileId: 0,
-                    referrerPubId: 0,
-                    collectModuleData: ''
-                })
-            );
-            hub.collect(
-                Types.CollectParams({
-                    publicationCollectedProfileId: profileId,
-                    publicationCollectedId: 3,
-                    collectorProfileId: profileId,
-                    referrerProfileId: 0,
-                    referrerPubId: 0,
-                    collectModuleData: ''
-                })
-            );
         } catch {
             console2.log('Follow with modern interface failed, proceeding with deprecated interface.');
-            IOldHub(address(hub)).follow(profileIds, datas);
-            IOldHub(address(hub)).collect(profileId, 1, '');
-            IOldHub(address(hub)).collect(profileId, 2, '');
-            IOldHub(address(hub)).collect(profileId, 3, '');
         }
     }
 
@@ -291,9 +232,6 @@ contract UpgradeForkTest is BaseTest {
         hubImpl = new LensHubInitializable({
             moduleGlobals: address(0),
             followNFTImpl: followNFTAddr,
-            lensHandlesAddress: address(0),
-            tokenHandleRegistryAddress: address(0),
-            newFeeFollowModule: address(0),
             tokenGuardianCooldown: PROFILE_GUARDIAN_COOLDOWN
         });
         followNFT = new FollowNFT(hubProxyAddr);

@@ -16,12 +16,4 @@ interface ILensImplGetters {
      * @return address The Follow NFT implementation address.
      */
     function getFollowNFTImpl() external view returns (address);
-
-    /**
-     * @notice Returns the Collect NFT implementation address that is used for each new deployed Collect NFT.
-     * @custom:pending-deprecation
-     *
-     * @return address The Collect NFT implementation address.
-     */
-    function getCollectNFTImpl() external view returns (address);
 }

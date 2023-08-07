@@ -163,9 +163,6 @@ contract TestSetup is Test, ForkManagement, ArrayHelpers {
         hubImpl = new LensHubInitializable({
             moduleGlobals: address(moduleGlobals),
             followNFTImpl: followNFTAddr,
-            lensHandlesAddress: lensHandlesProxyAddr,
-            tokenHandleRegistryAddress: tokenHandleRegistryProxyAddr,
-            newFeeFollowModule: address(0),
             tokenGuardianCooldown: PROFILE_GUARDIAN_COOLDOWN
         });
         followNFT = new FollowNFT(hubProxyAddr);
